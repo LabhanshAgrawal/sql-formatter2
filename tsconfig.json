@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "declaration": true,
+    "downlevelIteration": true,
+    "esModuleInterop": true,
+    "module": "commonjs",
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "outDir": "./lib",
+    "removeComments": true,
+    "strict": true,
+    "target": "es5",
+  }
+}
