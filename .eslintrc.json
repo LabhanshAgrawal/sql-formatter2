@@ -1,0 +1,38 @@
+{
+    "env": {
+        "browser": true,
+        "es6": true,
+        "node": true
+    },
+    "extends": [
+        "plugin:@typescript-eslint/eslint-recommended",
+        "plugin:@typescript-eslint/recommended",
+        "prettier/@typescript-eslint"
+    ],
+    "parser": "@typescript-eslint/parser",
+    "parserOptions": {
+        "ecmaVersion": 2018
+    },
+    "plugins": [
+        "prettier",
+        "@typescript-eslint"
+    ],
+    "rules": {
+        "linebreak-style": [
+            "error",
+            "unix"
+        ],
+        "prettier/prettier": [
+            "error",
+            {
+                "printWidth": 120,
+                "tabWidth": 2,
+                "singleQuote": true,
+                "trailingComma": "none",
+                "bracketSpacing": false,
+                "semi": true,
+                "useTabs": false
+            }
+        ]
+    }
+}

@@ -4,7 +4,9 @@
   "description": "Formats whitespaces in a SQL query to make it more readable, written in TypeScript",
   "main": "index.js",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "watch": "tsc --pretty --watch --preserveWatchOutput"
   },
   "files": [
     "lib/**/*"
@@ -21,6 +23,16 @@
   },
   "homepage": "https://github.com/LabhanshAgrawal/sql-formatter2#readme",
   "devDependencies": {
+    "@types/lodash": "^4.14.149",
+    "@typescript-eslint/eslint-plugin": "^2.15.0",
+    "@typescript-eslint/parser": "^2.15.0",
+    "eslint": "^6.8.0",
+    "eslint-config-prettier": "^6.9.0",
+    "eslint-plugin-prettier": "^3.1.2",
+    "prettier": "^1.19.1",
     "typescript": "^3.7.3"
+  },
+  "dependencies": {
+    "lodash": "^4.17.15"
   }
 }

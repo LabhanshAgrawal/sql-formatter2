@@ -3,6 +3,9 @@
     "declaration": true,
     "downlevelIteration": true,
     "esModuleInterop": true,
+    "lib": [
+      "ES2017"
+    ],
     "module": "commonjs",
     "noImplicitReturns": true,
     "noUnusedLocals": true,
