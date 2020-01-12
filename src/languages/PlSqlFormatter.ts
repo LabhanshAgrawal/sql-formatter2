@@ -1,5 +1,6 @@
 import Formatter from '../core/Formatter';
 import Tokenizer from '../core/Tokenizer';
+import {config} from '../core/types';
 
 const reservedWords = [
   'A',
@@ -407,13 +408,25 @@ const reservedNewlineWords = [
   'XOR'
 ];
 
-let tokenizer;
-
 export default class PlSqlFormatter {
+  cfg: config;
+  tokenizer: Tokenizer = new Tokenizer({
+    reservedWords,
+    reservedToplevelWords,
+    reservedNewlineWords,
+    // eslint-disable-next-line quotes
+    stringTypes: ['""', "N''", "''", '``'],
+    openParens: ['(', 'CASE'],
+    closeParens: [')', 'END'],
+    indexedPlaceholderTypes: ['?'],
+    namedPlaceholderTypes: [':'],
+    lineCommentTypes: ['--'],
+    specialWordChars: ['_', '$', '#', '.', '@']
+  });
   /**
    * @param {Object} cfg Different set of configurations
    */
-  constructor(cfg) {
+  constructor(cfg: config) {
     this.cfg = cfg;
   }
 
@@ -423,21 +436,7 @@ export default class PlSqlFormatter {
    * @param {String} query The PL/SQL string
    * @return {String} formatted string
    */
-  format(query) {
-    if (!tokenizer) {
-      tokenizer = new Tokenizer({
-        reservedWords,
-        reservedToplevelWords,
-        reservedNewlineWords,
-        stringTypes: ['""', "N''", "''", '``'],
-        openParens: ['(', 'CASE'],
-        closeParens: [')', 'END'],
-        indexedPlaceholderTypes: ['?'],
-        namedPlaceholderTypes: [':'],
-        lineCommentTypes: ['--'],
-        specialWordChars: ['_', '$', '#', '.', '@']
-      });
-    }
-    return new Formatter(this.cfg, tokenizer).format(query);
+  format(query: string): string {
+    return new Formatter(this.cfg, this.tokenizer).format(query);
   }
 }

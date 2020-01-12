@@ -1,5 +1,6 @@
 import Formatter from '../core/Formatter';
 import Tokenizer from '../core/Tokenizer';
+import {config} from '../core/types';
 
 const reservedWords = [
   'ALL',
@@ -222,13 +223,23 @@ const reservedNewlineWords = [
   'XOR'
 ];
 
-let tokenizer;
-
 export default class N1qlFormatter {
+  cfg: config;
+  tokenizer: Tokenizer = new Tokenizer({
+    reservedWords,
+    reservedToplevelWords,
+    reservedNewlineWords,
+    // eslint-disable-next-line quotes
+    stringTypes: ['""', "''", '``'],
+    openParens: ['(', '[', '{'],
+    closeParens: [')', ']', '}'],
+    namedPlaceholderTypes: ['$'],
+    lineCommentTypes: ['#', '--']
+  });
   /**
    * @param {Object} cfg Different set of configurations
    */
-  constructor(cfg) {
+  constructor(cfg: config) {
     this.cfg = cfg;
   }
 
@@ -238,19 +249,7 @@ export default class N1qlFormatter {
    * @param {String} query The N1QL string
    * @return {String} formatted string
    */
-  format(query) {
-    if (!tokenizer) {
-      tokenizer = new Tokenizer({
-        reservedWords,
-        reservedToplevelWords,
-        reservedNewlineWords,
-        stringTypes: ['""', "''", '``'],
-        openParens: ['(', '[', '{'],
-        closeParens: [')', ']', '}'],
-        namedPlaceholderTypes: ['$'],
-        lineCommentTypes: ['#', '--']
-      });
-    }
-    return new Formatter(this.cfg, tokenizer).format(query);
+  format(query: string): string {
+    return new Formatter(this.cfg, this.tokenizer).format(query);
   }
 }

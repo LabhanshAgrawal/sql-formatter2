@@ -1,4 +1,5 @@
 import tokenTypes from './tokenTypes';
+import {Token} from './types';
 
 const INLINE_MAX_LENGTH = 50;
 
@@ -10,6 +11,7 @@ const INLINE_MAX_LENGTH = 50;
  * expressions where open-parenthesis causes newline and increase of indentation.
  */
 export default class InlineBlock {
+  level: number;
   constructor() {
     this.level = 0;
   }
@@ -20,7 +22,7 @@ export default class InlineBlock {
    * @param  {Object[]} tokens Array of all tokens
    * @param  {Number} index Current token position
    */
-  beginIfPossible(tokens, index) {
+  beginIfPossible(tokens: Token[], index: number): void {
     if (this.level === 0 && this.isInlineBlock(tokens, index)) {
       this.level = 1;
     } else if (this.level > 0) {
@@ -34,7 +36,7 @@ export default class InlineBlock {
    * Finishes current inline block.
    * There might be several nested ones.
    */
-  end() {
+  end(): void {
     this.level--;
   }
 
@@ -42,25 +44,22 @@ export default class InlineBlock {
    * True when inside an inline block
    * @return {Boolean}
    */
-  isActive() {
+  isActive(): boolean {
     return this.level > 0;
   }
 
   // Check if this should be an inline parentheses block
   // Examples are "NOW()", "COUNT(*)", "int(10)", key(`somecolumn`), DECIMAL(7,2)
-  isInlineBlock(tokens, index) {
+  isInlineBlock(tokens: Token[], index: number): boolean {
     let length = 0;
     let level = 0;
-
     for (let i = index; i < tokens.length; i++) {
       const token = tokens[i];
       length += token.value.length;
-
       // Overran max length
       if (length > INLINE_MAX_LENGTH) {
         return false;
       }
-
       if (token.type === tokenTypes.OPEN_PAREN) {
         level++;
       } else if (token.type === tokenTypes.CLOSE_PAREN) {
@@ -69,7 +68,6 @@ export default class InlineBlock {
           return true;
         }
       }
-
       if (this.isForbiddenToken(token)) {
         return false;
       }
@@ -79,7 +77,9 @@ export default class InlineBlock {
 
   // Reserved words that cause newlines, comments and semicolons
   // are not allowed inside inline parentheses block
-  isForbiddenToken({type, value}) {
+  isForbiddenToken(_ref: Token): boolean {
+    const type = _ref.type;
+    const value = _ref.value;
     return (
       type === tokenTypes.RESERVED_TOPLEVEL ||
       type === tokenTypes.RESERVED_NEWLINE ||

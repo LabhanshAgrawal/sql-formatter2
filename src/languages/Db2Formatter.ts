@@ -1,5 +1,6 @@
 import Formatter from '../core/Formatter';
 import Tokenizer from '../core/Tokenizer';
+import {config} from '../core/types';
 
 const reservedWords = [
   'ABS',
@@ -515,8 +516,8 @@ const reservedToplevelWords = [
   'EXCEPT',
   'FETCH FIRST',
   'FROM',
-  'GROUP BY',
   'GO',
+  'GROUP BY',
   'HAVING',
   'INSERT INTO',
   'INTERSECT',
@@ -545,13 +546,25 @@ const reservedNewlineWords = [
   'RIGHT OUTER JOIN'
 ];
 
-let tokenizer;
-
 export default class Db2Formatter {
+  cfg: config;
+  tokenizer: Tokenizer = new Tokenizer({
+    reservedWords,
+    reservedToplevelWords,
+    reservedNewlineWords,
+    // eslint-disable-next-line prettier/prettier
+    stringTypes: ['""', '\'\'', '``', '[]'],
+    openParens: ['('],
+    closeParens: [')'],
+    indexedPlaceholderTypes: ['?'],
+    namedPlaceholderTypes: [':'],
+    lineCommentTypes: ['--'],
+    specialWordChars: ['#', '@']
+  });
   /**
    * @param {Object} cfg Different set of configurations
    */
-  constructor(cfg) {
+  constructor(cfg: config) {
     this.cfg = cfg;
   }
 
@@ -561,21 +574,7 @@ export default class Db2Formatter {
    * @param {String} query The DB2 query string
    * @return {String} formatted string
    */
-  format(query) {
-    if (!tokenizer) {
-      tokenizer = new Tokenizer({
-        reservedWords,
-        reservedToplevelWords,
-        reservedNewlineWords,
-        stringTypes: ['""', "''", '``', '[]'],
-        openParens: ['('],
-        closeParens: [')'],
-        indexedPlaceholderTypes: ['?'],
-        namedPlaceholderTypes: [':'],
-        lineCommentTypes: ['--'],
-        specialWordChars: ['#', '@']
-      });
-    }
-    return new Formatter(this.cfg, tokenizer).format(query);
+  format(query: string): string {
+    return new Formatter(this.cfg, this.tokenizer).format(query);
   }
 }

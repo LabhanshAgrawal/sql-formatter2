@@ -2,6 +2,7 @@ import Db2Formatter from './languages/Db2Formatter';
 import N1qlFormatter from './languages/N1qlFormatter';
 import PlSqlFormatter from './languages/PlSqlFormatter';
 import StandardSqlFormatter from './languages/StandardSqlFormatter';
+import {config} from './core/types';
 
 export default {
   /**
@@ -14,7 +15,7 @@ export default {
    *  @param {Object} cfg.params Collection of params for placeholder replacement
    * @return {String}
    */
-  format: (query, cfg) => {
+  format: (query: string, cfg: config): string => {
     cfg = cfg || {};
 
     switch (cfg.language) {

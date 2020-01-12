@@ -1,11 +1,15 @@
+import {parameters, Token} from './types';
+
 /**
  * Handles placeholder replacement with given params.
  */
 export default class Params {
+  params: parameters;
+  index: number;
   /**
    * @param {Object} params
    */
-  constructor(params) {
+  constructor(params: parameters = {}) {
     this.params = params;
     this.index = 0;
   }
@@ -17,13 +21,20 @@ export default class Params {
    *   @param {String} token.value Placeholder value
    * @return {String} param or token.value when params are missing
    */
-  get({key, value}) {
+  get(_ref: Token): string {
+    const key = _ref.key;
+    const value = _ref.value;
+
     if (!this.params) {
       return value;
     }
-    if (key) {
-      return this.params[key];
+    if (!Array.isArray(this.params)) {
+      if (Object.keys(this.params).includes(key)) {
+        return this.params[key];
+      }
+    } else {
+      return this.params[this.index++];
     }
-    return this.params[this.index++];
+    return value;
   }
 }

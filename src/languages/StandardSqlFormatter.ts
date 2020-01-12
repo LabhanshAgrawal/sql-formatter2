@@ -1,5 +1,6 @@
 import Formatter from '../core/Formatter';
 import Tokenizer from '../core/Tokenizer';
+import {config} from '../core/types';
 
 const reservedWords = [
   'ACCESSIBLE',
@@ -285,8 +286,8 @@ const reservedToplevelWords = [
   'EXCEPT',
   'FETCH FIRST',
   'FROM',
-  'GROUP BY',
   'GO',
+  'GROUP BY',
   'HAVING',
   'INSERT INTO',
   'INSERT',
@@ -320,16 +321,34 @@ const reservedNewlineWords = [
   'RIGHT JOIN',
   'RIGHT OUTER JOIN',
   'WHEN',
-  'XOR'
+  'XOR',
+  'THEN',
+  'ON',
+  'LATERAL VIEW',
+  ';'
 ];
 
-let tokenizer;
+// let tokenizer = void 0;
 
 export default class StandardSqlFormatter {
+  cfg: config;
+  tokenizer: Tokenizer = new Tokenizer({
+    reservedWords,
+    reservedToplevelWords,
+    reservedNewlineWords,
+    // eslint-disable-next-line quotes
+    stringTypes: ['""', "N''", "''", '``'],
+    openParens: ['(', '[', 'CASE'],
+    closeParens: [')', ']', 'END'],
+    indexedPlaceholderTypes: ['?'],
+    namedPlaceholderTypes: ['@', ':'],
+    lineCommentTypes: ['#', '--'],
+    specialWordChars: []
+  });
   /**
    * @param {Object} cfg Different set of configurations
    */
-  constructor(cfg) {
+  constructor(cfg: config) {
     this.cfg = cfg;
   }
 
@@ -339,20 +358,7 @@ export default class StandardSqlFormatter {
    * @param {String} query The Standard SQL string
    * @return {String} formatted string
    */
-  format(query) {
-    if (!tokenizer) {
-      tokenizer = new Tokenizer({
-        reservedWords,
-        reservedToplevelWords,
-        reservedNewlineWords,
-        stringTypes: ['""', "N''", "''", '``', '[]'],
-        openParens: ['(', 'CASE'],
-        closeParens: [')', 'END'],
-        indexedPlaceholderTypes: ['?'],
-        namedPlaceholderTypes: ['@', ':'],
-        lineCommentTypes: ['#', '--']
-      });
-    }
-    return new Formatter(this.cfg, tokenizer).format(query);
+  format(query: string): string {
+    return new Formatter(this.cfg, this.tokenizer).format(query);
   }
 }

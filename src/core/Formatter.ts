@@ -1,24 +1,35 @@
-import includes from 'lodash/includes';
-import trimEnd from 'lodash/trimEnd';
+import * as _ from 'lodash';
+const trimEnd = _.trimEnd;
 import tokenTypes from './tokenTypes';
 import Indentation from './Indentation';
 import InlineBlock from './InlineBlock';
 import Params from './Params';
+import Tokenizer from './Tokenizer';
+
+import {Token, config} from './types';
 
 export default class Formatter {
+  cfg: config;
+  indentation: Indentation;
+  inlineBlock: InlineBlock;
+  params: Params;
+  tokenizer: Tokenizer;
+  previousReservedWord: Token;
+  index: number;
+  tokens: Token[];
   /**
    * @param {Object} cfg
    *   @param {Object} cfg.indent
    *   @param {Object} cfg.params
    * @param {Tokenizer} tokenizer
    */
-  constructor(cfg, tokenizer) {
-    this.cfg = cfg || {};
+  constructor(cfg: config = {}, tokenizer: Tokenizer) {
+    this.cfg = cfg;
     this.indentation = new Indentation(this.cfg.indent);
     this.inlineBlock = new InlineBlock();
     this.params = new Params(this.cfg.params);
     this.tokenizer = tokenizer;
-    this.previousReservedWord = {};
+    this.previousReservedWord = {type: '', value: '', key: ''};
     this.tokens = [];
     this.index = 0;
   }
@@ -29,14 +40,13 @@ export default class Formatter {
    * @param {String} query The SQL query string
    * @return {String} formatted query
    */
-  format(query) {
+  format(query: string): string {
     this.tokens = this.tokenizer.tokenize(query);
     const formattedQuery = this.getFormattedQueryFromTokens();
-
     return formattedQuery.trim();
   }
 
-  getFormattedQueryFromTokens() {
+  getFormattedQueryFromTokens(): string {
     let formattedQuery = '';
 
     this.tokens.forEach((token, index) => {
@@ -78,47 +88,49 @@ export default class Formatter {
     return formattedQuery;
   }
 
-  formatLineComment(token, query) {
-    return this.addNewline(query + token.value);
+  formatLineComment({value}: {value: string}, query: string): string {
+    return this.addNewline(query + value);
   }
 
-  formatBlockComment(token, query) {
-    return this.addNewline(this.addNewline(query) + this.indentComment(token.value));
+  formatBlockComment({value}: {value: string}, query: string): string {
+    return this.addNewline(this.addNewline(query) + this.indentComment(value));
   }
 
-  indentComment(comment) {
-    return comment.replace(/\n/g, '\n' + this.indentation.getIndent());
+  indentComment(comment: string): string {
+    return comment.replace(/\n/g, `\n${this.indentation.getIndent()}`);
   }
 
-  formatToplevelReservedWord(token, query) {
+  formatToplevelReservedWord({value}: {value: string}, query: string): string {
     this.indentation.decreaseTopLevel();
 
     query = this.addNewline(query);
 
     this.indentation.increaseToplevel();
 
-    query += this.equalizeWhitespace(token.value);
+    query += this.equalizeWhitespace(value);
     return this.addNewline(query);
   }
 
-  formatNewlineReservedWord(token, query) {
-    return this.addNewline(query) + this.equalizeWhitespace(token.value) + ' ';
+  formatNewlineReservedWord({value}: {value: string}, query: string): string {
+    return `${this.addNewline(query) + this.equalizeWhitespace(value)} `;
   }
 
-  // Replace any sequence of whitespace characters with single space
-  equalizeWhitespace(string) {
+  /** Replace any sequence of whitespace characters with single space
+   */
+  equalizeWhitespace(string: string): string {
     return string.replace(/\s+/g, ' ');
   }
 
-  // Opening parentheses increase the block indent level and start a new line
-  formatOpeningParentheses(token, query) {
+  /** Opening parentheses increase the block indent level and start a new line
+   */
+  formatOpeningParentheses({value}: {value: string}, query: string): string {
     // Take out the preceding space unless there was whitespace there in the original query
     // or another opening parens or line comment
-    const preserveWhitespaceFor = [tokenTypes.WHITESPACE, tokenTypes.OPEN_PAREN, tokenTypes.LINE_COMMENT];
-    if (!includes(preserveWhitespaceFor, this.previousToken().type)) {
+    const preserveWhitespaceFor: string[] = [tokenTypes.WHITESPACE, tokenTypes.OPEN_PAREN, tokenTypes.LINE_COMMENT];
+    if (!preserveWhitespaceFor.includes(this.previousToken().type)) {
       query = trimEnd(query);
     }
-    query += token.value;
+    query += value;
 
     this.inlineBlock.beginIfPossible(this.tokens, this.index);
 
@@ -129,8 +141,9 @@ export default class Formatter {
     return query;
   }
 
-  // Closing parentheses decrease the block indent level
-  formatClosingParentheses(token, query) {
+  /** Closing parentheses decrease the block indent level
+   */
+  formatClosingParentheses(token: Token, query: string): string {
     if (this.inlineBlock.isActive()) {
       this.inlineBlock.end();
       return this.formatWithSpaceAfter(token, query);
@@ -140,14 +153,14 @@ export default class Formatter {
     }
   }
 
-  formatPlaceholder(token, query) {
-    return query + this.params.get(token) + ' ';
+  formatPlaceholder(token: Token, query: string): string {
+    return `${query + this.params.get(token)} `;
   }
 
-  // Commas start a new line (unless within inline parentheses or SQL "LIMIT" clause)
-  formatComma(token, query) {
-    query = this.trimTrailingWhitespace(query) + token.value + ' ';
-
+  /** Commas start a new line (unless within inline parentheses or SQL "LIMIT" clause)
+   */
+  formatComma({value}: {value: string}, query: string): string {
+    query = `${this.trimTrailingWhitespace(query) + value} `;
     if (this.inlineBlock.isActive()) {
       return query;
     } else if (/^LIMIT$/i.test(this.previousReservedWord.value)) {
@@ -157,35 +170,35 @@ export default class Formatter {
     }
   }
 
-  formatWithSpaceAfter(token, query) {
-    return this.trimTrailingWhitespace(query) + token.value + ' ';
+  formatWithSpaceAfter({value}: {value: string}, query: string): string {
+    return `${this.trimTrailingWhitespace(query) + value} `;
   }
 
-  formatWithoutSpaces(token, query) {
-    return this.trimTrailingWhitespace(query) + token.value;
+  formatWithoutSpaces({value}: {value: string}, query: string): string {
+    return this.trimTrailingWhitespace(query) + value;
   }
 
-  formatWithSpaces(token, query) {
-    return query + token.value + ' ';
+  formatWithSpaces({value}: {value: string}, query: string): string {
+    return `${query + value} `;
   }
 
-  formatQuerySeparator(token, query) {
-    return this.trimTrailingWhitespace(query) + token.value + '\n';
+  formatQuerySeparator({value}: {value: string}, query: string): string {
+    return `${this.trimTrailingWhitespace(query)}\n${value}\n`;
   }
 
-  addNewline(query) {
-    return trimEnd(query) + '\n' + this.indentation.getIndent();
+  addNewline(query: string): string {
+    return `${trimEnd(query)}\n${this.indentation.getIndent()}`;
   }
 
-  trimTrailingWhitespace(query) {
+  trimTrailingWhitespace(query: string): string {
     if (this.previousNonWhitespaceToken().type === tokenTypes.LINE_COMMENT) {
-      return trimEnd(query) + '\n';
+      return `${trimEnd(query)}\n`;
     } else {
       return trimEnd(query);
     }
   }
 
-  previousNonWhitespaceToken() {
+  previousNonWhitespaceToken(): Token {
     let n = 1;
     while (this.previousToken(n).type === tokenTypes.WHITESPACE) {
       n++;
@@ -193,7 +206,8 @@ export default class Formatter {
     return this.previousToken(n);
   }
 
-  previousToken(offset = 1) {
+  previousToken(offset = 1): Token {
+    // const offset = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
     return this.tokens[this.index - offset] || {};
   }
 }
