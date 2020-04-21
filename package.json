@@ -24,7 +24,7 @@
   "homepage": "https://github.com/LabhanshAgrawal/sql-formatter2#readme",
   "devDependencies": {
     "@types/lodash": "^4.14.150",
-    "@typescript-eslint/eslint-plugin": "^2.28.0",
+    "@typescript-eslint/eslint-plugin": "^2.29.0",
     "@typescript-eslint/parser": "^2.29.0",
     "eslint": "^6.8.0",
     "eslint-config-prettier": "^6.10.1",
